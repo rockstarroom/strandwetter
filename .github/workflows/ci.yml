@@ -6,16 +6,34 @@ on:
       - main
       - master
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (with npm cache)
+        if: ${{ hashFiles('package-lock.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Setup Node.js (no cache)
+        if: ${{ hashFiles('package-lock.json') == '' }}
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -26,7 +44,7 @@ jobs:
             npm ci
           else
             echo "package-lock.json fehlt, verwende npm install"
-            npm install
+            npm install --no-audit --no-fund
           fi
 
       - name: Next.js production build
