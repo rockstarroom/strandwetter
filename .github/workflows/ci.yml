@@ -21,7 +21,13 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "package-lock.json fehlt, verwende npm install"
+            npm install
+          fi
 
       - name: Next.js production build
         run: npm run build
